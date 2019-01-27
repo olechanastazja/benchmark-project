@@ -38,13 +38,13 @@ class BenchmarkingService {
                 try{
                     $this->notificationService->sendEmail();
                 }catch (\Exception $exception){
-                    $errors[] = $exception->getMessage();
+                    $errors[] = [$exception->getMessage()];
                 }
             }elseif ($difference < 0 && $difference <= $mainUrlTime/2){
                 try{
                     $this->notificationService->sendSms();
                 }catch (\Exception $exception){
-                    $errors[] = $exception->getMessage();
+                    $errors[] = [$exception->getMessage()];
                 }
             }
             $contents[] = [$url, $urlTime, $difference];
