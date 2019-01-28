@@ -14,19 +14,37 @@ class BenchmarkingServiceTest extends WebTestCase
     private $benchmarkingService;
 
 
-    /**
-     * @dataProvider urlProvider
-     */
-    public function testHandleProcess($url)
+    protected function setUp()
     {
-        $result = $this->benchmarkingService->handleProcess($url,[]);
+        parent::setUp();
+        $mailer = $this->createMock(\Swift_Mailer::class);
+        $templating = $this->createMock(EngineInterface::class);
+        $this->notificationService = new NotificationService($templating, $mailer);
+        $this->benchmarkingService = new BenchmarkingService($this->notificationService);
+    }
+
+    /**
+     * @dataProvider handleProcessProvider
+     */
+    public function testHandleProcess($url, $others)
+    {
+        $result = $this->benchmarkingService->handleProcess($url, $others);
         $this->assertContains("Url | Execution time | Difference\n", $result);
         $this->assertContains($url, $result);
         $this->assertContains('Date of the test', $result);
     }
 
     /**
-     * @dataProvider urlProvider
+     * @dataProvider handleProcessFailProvider
+     */
+    public function testHandleProcessFail($url, $others)
+    {
+        $result = $this->benchmarkingService->handleProcess($url, $others);
+        $this->assertContains($result, 'Remember that all arguments has to be urls in a proper form.');
+    }
+
+    /**
+     * @dataProvider getTimeProvider
      */
     public function testGetTime($url)
     {
@@ -43,8 +61,24 @@ class BenchmarkingServiceTest extends WebTestCase
             [$content]));
     }
 
+    public function handleProcessProvider()
+    {
+        return [
+            ['http://www.codewars.com', ['http://www.google.com']],
+            ['http://www.youtube.com', ['https://www.onet.pl']],
+        ];
+    }
 
-    public function urlProvider()
+    public function handleProcessFailProvider()
+    {
+        return [
+            ['odewar.som', ['htcp:www.goocle.com']],
+            ['not-a-url', ['goocle.com']],
+        ];
+    }
+
+
+    public function getTimeProvider()
     {
         return [
             ['http://www.codewars.com'],
@@ -68,14 +102,5 @@ class BenchmarkingServiceTest extends WebTestCase
         $method->setAccessible(true);
 
         return $method->invokeArgs($object, $parameters);
-    }
-
-    protected function setUp()
-    {
-        parent::setUp();
-        $mailer = $this->createMock(\Swift_Mailer::class);
-        $templating = $this->createMock(EngineInterface::class);
-        $this->notificationService = new NotificationService($templating, $mailer);
-        $this->benchmarkingService = new BenchmarkingService($this->notificationService);
     }
 }

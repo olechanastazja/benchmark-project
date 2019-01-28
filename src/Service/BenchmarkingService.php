@@ -21,18 +21,27 @@ class BenchmarkingService {
 
     /**
      * Handles a process of benchmarking service
-     * @param $mainUrl
-     * @param $otherUrls
+     * @param string $mainUrl
+     * @param array $otherUrls
      * @return string
      */
-    public function handleProcess($mainUrl, $otherUrls)
+    public function handleProcess(string $mainUrl,array $otherUrls): string
     {
-        $contents[] = ['Url', 'Execution time', 'Difference'];
-        $mainUrlTime = $this->getTime($mainUrl);
-        $contents[] = [$mainUrl, $mainUrlTime, '-'];
+        $contents = [];
         $errors= [];
+        $contents[] = ['Url', 'Execution time', 'Difference'];
+        try{
+            $mainUrlTime = $this->getTime($mainUrl);
+        }catch (\Exception $exception){
+            return $exception->getMessage();
+        }
+        $contents[] = [$mainUrl, $mainUrlTime, '-'];
         foreach ($otherUrls as $key => $url){
-            $urlTime = $this->getTime($url);
+            try {
+                $urlTime = $this->getTime($url);
+            }catch (\Exception $exception){
+                return $exception->getMessage();
+            }
             $difference = $urlTime - $mainUrlTime;
             if($difference < 0){
                 try{
@@ -58,10 +67,11 @@ class BenchmarkingService {
     }
 
     /**
-     * @param $url
+     * @param string $url
      * @return float
+     * @throws \Exception
      */
-    private function getTime($url) :float
+    private function getTime(string $url) :float
     {
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -70,7 +80,7 @@ class BenchmarkingService {
 
         if(curl_exec($ch) === false)
         {
-            return 'There was and error. Curl error:' . curl_error($ch);
+            throw new \Exception('Remember that all arguments has to be urls in a proper form.');
         }
 
         curl_close($ch);
@@ -80,27 +90,25 @@ class BenchmarkingService {
 
     /**
      * Logs the information into text file
-     * @param $content
+     * @param array $content
      */
-    private function logIntoFile($content): void
+    private function logIntoFile(array $content): void
     {
-        touch('log.txt');
-        $fp = fopen('log.txt', 'w');
-        fwrite($fp, $this->transformIntoText($content));
-        fclose($fp);
+        $filename = 'log.txt';
+        $text = $this->transformIntoText($content);
+        file_put_contents($filename, $text, FILE_APPEND | LOCK_EX);
     }
 
     /**
      * Transforms array to readable text
-     * @param $content
+     * @param array $content
      * @return string
      */
-    private function transformIntoText($content): string
+    private function transformIntoText(array $content): string
     {
-        $str = "";
-        foreach ($content as $row){
-            $str .= implode(' | ', $row) . PHP_EOL;
-        }
+        $str = array_reduce($content, function ($str, $elem){
+            return $str .= implode(' | ', $elem) . PHP_EOL;
+        });
         return $str;
     }
 

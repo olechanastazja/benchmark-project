@@ -48,9 +48,31 @@ class BenchmarkCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $result = $this->benchmarkingService->handleProcess($input->getArgument('main-url'),
-            $input->getArgument('others-urls'));
-
+        $validate  = $this->inputValidator(array_merge([$input->getArgument('main-url')],
+            $input->getArgument('others-urls')));
+        if(!$validate){
+            $result = '<info>Remember that all arguments has to be urls in a proper form.</info>';
+        }else{
+            $result = $this->benchmarkingService->handleProcess($input->getArgument('main-url'),
+                $input->getArgument('others-urls'));
+        }
         $output->writeln($result);
+    }
+
+    /**
+     * Checks if inserted url is valid
+     * @param array $inputUrls
+     * @return bool
+     */
+    private function inputValidator(array $inputUrls)
+    {
+        foreach ($inputUrls as $inputUrl){
+            if (!filter_var($inputUrl, FILTER_VALIDATE_URL) ||
+                !preg_match("/\b(?:(?:https?):\/\/|www\.)[-a-z0-9+&@#\/%?=~_|!:,.;]*[-a-z0-9+&@#\/%=~_|]/i",
+                    $inputUrl)) {
+                return false;
+            }
+        }
+        return true;
     }
 }

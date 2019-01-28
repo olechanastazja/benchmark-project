@@ -12,6 +12,15 @@ class NotificationServiceTest extends WebTestCase
     private $notificationService;
     private $mailer;
 
+
+    protected function setUp()
+    {
+        parent::setUp();
+        $this->mailer = $this->createMock(\Swift_Mailer::class);
+        $templating = $this->createMock(EngineInterface::class);
+        $this->notificationService = new NotificationService($templating, $this->mailer);
+    }
+
     public function testSendEmail()
     {
         $this->mailer->expects($this->once())
@@ -24,13 +33,5 @@ class NotificationServiceTest extends WebTestCase
             }));
 
         $this->notificationService->sendEmail();
-    }
-
-    protected function setUp()
-    {
-        parent::setUp();
-        $this->mailer = $this->createMock(\Swift_Mailer::class);
-        $templating = $this->createMock(EngineInterface::class);
-        $this->notificationService = new NotificationService($templating, $this->mailer);
     }
 }

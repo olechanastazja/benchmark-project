@@ -8,7 +8,14 @@ use Twilio\Rest\Client;
 
 class NotificationService {
 
+    /**
+     * @var EngineInterface
+     */
     private $templating;
+
+    /**
+     * @var \Swift_Mailer
+     */
     private $mailer;
 
     /**
@@ -52,7 +59,7 @@ class NotificationService {
             array(
                 'from' => getenv('PHONE_NUMBER'),
                 'body' => 'HI! You get that message because you site loaded at least twice as slow as at least one of the
-c                          competitors.'
+                          competitors.'
             )
         );
     }
